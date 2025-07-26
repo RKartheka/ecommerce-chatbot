@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatbot</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f2f2f2; }
+    #chatbox { width: 100%; height: 400px; overflow-y: scroll; background: #fff; padding: 10px; border: 1px solid #ccc; margin-bottom: 10px; }
+    #userInput { width: 80%; padding: 10px; }
+    #sendBtn { padding: 10px; }
+  </style>
+</head>
+<body>
+  <h2>E-commerce Chatbot</h2>
+  <div id="chatbox"></div>
+  <input type="text" id="userInput" placeholder="Ask a question..." />
+  <button id="sendBtn">Send</button>
+
+  <script>
+    const chatbox = document.getElementById("chatbox");
+    const userInput = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    function appendMessage(sender, text) {
+      const message = document.createElement("div");
+      message.textContent = sender + ": " + text;
+      chatbox.appendChild(message);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+
+    async function getResponse(message) {
+      if (message.toLowerCase().includes("top") || message.toLowerCase().includes("best")) {
+        const res = await fetch("http://localhost:3000/top-products");
+        const data = await res.json();
+        appendMessage("Bot", "Top Products:
+" + data.map(p => `${p.name} - Sold: ${p.sold}`).join(", "));
+      } else if (message.toLowerCase().includes("order")) {
+        const orderId = prompt("Enter Order ID:");
+        const res = await fetch(`http://localhost:3000/order-status/${orderId}`);
+        const data = await res.json();
+        appendMessage("Bot", `Order ${data.orderId} status: ${data.status}`);
+      } else if (message.toLowerCase().includes("stock") || message.toLowerCase().includes("available")) {
+        const product = prompt("Enter Product Name:");
+        const res = await fetch(`http://localhost:3000/inventory/${product}`);
+        const data = await res.json();
+        appendMessage("Bot", `${data.productName} has ${data.stock} items in stock.`);
+      } else {
+        appendMessage("Bot", "Sorry, I didn’t understand. Ask about 'top products', 'order status' or 'stock'.");
+      }
+    }
+
+    sendBtn.addEventListener("click", () => {
+      const msg = userInput.value;
+      if (msg.trim() !== "") {
+        appendMessage("You", msg);
+        getResponse(msg);
+        userInput.value = "";
+      }
+    });
+  </script>
+</body>
+</html>
